@@ -1,0 +1,149 @@
+# ==========================================
+# 🏢 COMPANY GLOSSARY & KPI DEFINITIONS
+# ==========================================
+products:
+  - Digital Casino
+  - Live Casino
+  - Sportsbook
+  - eSports
+  - Virtual Sports
+  - Poker
+
+brands:
+  - brand_1.lv
+  - brand_3.lv
+  - brand_2.lv
+  - brand_1.ee
+  - brand_4.ee
+  - brand_6.ee
+  - brand_7.ee
+  - brand_1.lt
+  - brand_5.lt
+  - brand_6.fi
+  - brand_7.fi
+  - brand_6.se
+
+abbreviations:
+  MTD: "Month-To-Date"
+  QTD: "Quarter-To-Date"
+  YTD: "Year-To-Date"
+  SPLM: "Same Period Last Month"
+  SPLQ: "Same Period Last Quarter"
+  SPLY: "Same Period Last Year"
+  MoM: "Month Over Month"
+  QoQ: "Quarter Over Quarter"
+  YoY: "Year Over Year"
+  PoP: "Period Over Period"
+
+kpi_definitions:
+  activity_measures:
+    New_registration: "Quantity of the very first registrations made by unique players on a gaming platform."
+    FTD: "First time depositor."
+    UDP: "Unique depositing players during the set period."
+    NADP: "New active depositing players (this is not product specific metric as deposit cannot be attributed to single product)."
+    NAP: "New active player (used for products)."
+    Conversion_to_NADP: "Formula: NADP / new registrations."
+    Unique_actives: "An active customer is one who has placed at least one real-money bet in the set period."
+    Daily_average_actives: "Formula: sum of unique actives per day / number of days within set period."
+    Frequency: "Shows on average how many days per month user has been active. Formula: sum of unique actives per day / unique actives per month."
+    Retained_players: "Users that were active current and past period."
+    Retention_percent: "Formula: users that were active current and past period / unique actives past period."
+    Reactivated_players: "Users that were active current period, but were not active past period and their NADP date is not in current period."
+    Reactivated_players_90: "Same as Reactivated Players, but instead of 30 day period its looking at users based on 90 day period."
+    Churned_players: "Net amount of churned players during the month. Formula: (past month actives) - (current period actives - current period NAPs)."
+    Churn_rate: "Formula: 1 - ((current period actives - current period NAPs)/(past period actives)). Result can be negative if churned is smaller than retained/reactivated."
+    Stickiness: "Formula: Daily AVG Actives / Actives."
+    Outliers: "Definition under review as of 2026-08-21 (previous 99th-percentile Turnover/Deposits definition removed - did not match the actual implementation). Current implementation (src/processing/outlier_detection.py) is 3x IQR on player NGR; monthly vs. overall-period basis and count thresholds are being re-evaluated."
+
+  payment_measures:
+    Deposit: "User's money deposit to our website."
+    Deposit_count: "Number of money deposits made by users."
+    ADPU: "Average deposit per user. Formula: deposit amount / UDP."
+    Average_deposit: "Formula: deposit amount / deposit count."
+    Withdrawal: "Money withdrawal from website to user's bank."
+    Withdrawal_count: "Number of money withdrawals made by users."
+
+  financial_measures:
+    Turnover: "Total amount wagered (amount of bets placed)."
+    Bet_count: "Number of bets made in the set period. In Sportsbook this is based on the number of betslips. Multibet counted as single bet."
+    AVG_Bet: "Formula: turnover / bet count."
+    Daily_AVG_turnover: "Formula: turnover / number of days in the set period."
+    ATPU: "Average turnover per user (also ABPU or Spend per head). Formula: turnover / actives."
+    Average_turnover_per_active_day: "Formula: ATPU / Frequency."
+    Win_amount: "Sum of money a player receives as winnings from a wager."
+    GGR: "Gross gaming revenue. Formula: Bets - Wins. In Poker GGR is sum of total rake."
+    GGR_margin: "Percentage of total wagers retained after deducting all player winnings. Formula: 1 - RTP (or GGR / Turnover)."
+    RTP: "Return to player. Percentage of money paid back to players in winnings. Formula: 1 - Margin (or Win amount / Turnover)."
+    Bonus: "Bonus money that player can use to place bets, plus cashbacks, refunds, combo boosts, etc."
+    Bonus_bet_amount: "Bonus amount used as bet by users."
+    Bonus_win_amount: "Player's winnings from a bet placed using bonus money."
+    Bonus_percent_GGR: "Cost of bonus in the set period expressed as percentage from the GGR. Formula: Bonus amount / GGR."
+    Bonus_percent_TO: "Cost of bonus in the set period expressed as percentage from the Turnover. Formula: Bonus amount / Turnover."
+    NGR: "Net gaming revenue. Formula: GGR - bonus amount."
+    ARPU: "Average revenue per user or NGR per active. Formula: NGR / Actives."
+    ARPD: "Average revenue per active day. Formula: NGR / Actives / Frequency (or ARPU / Frequency)."
+    Exposure: "Formula: (TURNOVER * ODDS) - TURNOVER."
+    Max_Bet: "Max allowed bet user can place."
+    Units_GGR: "Calculate total betting activity as if each bet were 1 unit. Units turnover always equals the number of bets placed."
+    Units_GGR_Margin: "Formula: (Units GGR / Total Units Turnover) x 100."
+    Bet_Odds: "Odds which were applied when user placed a wager."
+    Latest_Available_Odds: "Last available odd before event bets were closed."
+    Probability: "Formula: 1 / Latest Available Odd."
+    Lifetime_KPIs: "Lifetime KPI formulas are the same as regular KPIs and are calculated from 2014."
+    Balance: "Current user account balance."
+
+  gameplay_measures:
+    Session_time: "Total amount of time spent on platform. Registered from log-in to log-out (not actual gameplay time)."
+    Session_count: "Number of all sessions made by playing users during the set period."
+    Average_session_time: "Formula: session time / session count."
+
+# ==========================================
+# 🎨 DESIGN & BRAND GUIDELINES (For Matplotlib)
+# ==========================================
+design_guidelines:
+  chart_style:
+    background_color: "#F7F6F2"  # Warm off-white, easy on the eyes
+    gridlines: "None, or very light horizontal only (#E2E8F0)"
+    font_family: "sans-serif"
+    title_alignment: "left"
+    
+  brand_colors:
+    primary: "#BF00FF"      # Deep corporate purple
+    secondary: "#43268B"    # Dark purple
+    accent: "#DD6B20"       # Orange for highlighting outliers/warnings
+    good_trend: "#38A169"   # Green for positive growth
+    bad_trend: "#E53E3E"    # Red for negative drops
+    tabs_and_accents: "#553B91"  # (80% Deep Purple)
+    strong_accents: "#A595C7"    # (40% Deep purple)
+    light_accents: "#D1C9E3"     # (20% Deep purple)
+  
+  color_palette_for_graphs:
+    deep_purple: "#553B91"
+    soft_red: "#E57373"
+    vibrant_yellow: "#FDD835"
+    teal: "#4DB6AC"
+    muted_blue: "#7986CB"
+    warm_orange: "#FFB74D"
+    sky_blue: "#64B5F6"
+    soft_green: "#81C784"
+    earthy_brown: "#A1887F"
+    lavender: "#BA68C8"
+    lime_green: "#DCE775"
+    peach: "#FF8A65"
+    gray_blue: "#90A4AE"
+    pink: "#F06292"
+    golden_yellow: "#FFD54F"
+
+  whitelabel_specific_colors:
+    brand_1.lv: "#F21D3A"
+    brand_2.lv: "#7355BC"
+    brand_3.lv: "#2763CF"
+    brand_1.ee: "#2C3E3E"
+    brand_4.ee: "#FF5087"
+    brand_6.ee: "#1A7560"
+    brand_7.ee: "#FDC03D"
+    brand_1.lt: "#FFF61A"
+    brand_5.lt: "#E88181"
+    brand_6.fi: "#545F6C"
+    brand_7.fi: "#4F1ABE"
+    brand_6.se: "#FC5822"

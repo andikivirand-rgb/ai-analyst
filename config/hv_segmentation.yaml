@@ -1,0 +1,74 @@
+# Frozen 2025-baseline parameters for src/processing/hv_segmentation.py.
+# Computed once (2026-08-24) from calendar-2025 data in data/raw/monthly_player_data.csv
+# and NOT recalculated at runtime — the module only ever reads these values. To refresh,
+# re-run the frozen-bar/1-HHI computation against a new baseline year and replace this
+# file by hand; there is no code path that regenerates it automatically.
+#
+# frozen_bar (EUR): 99th percentile of pooled per-player trailing-3-month turnover,
+#   across all rolling 3-month windows fully inside calendar 2025 (Jan-Mar .. Oct-Dec,
+#   10 windows unless some are dropped per event_months below). null if skip=true.
+# inv_hhi_2025: 1/HHI computed on full-calendar-2025 per-player turnover, audit-only —
+#   this is what skip is derived from, not something the module recomputes.
+# skip: true if inv_hhi_2025 < 30 — brand-product is too concentrated / has too few
+#   players for a high-value/regular split to be meaningful. hv_segmentation.py refuses
+#   to run a report for a skipped brand-product.
+# event_months: calendar months (YYYY-MM) excluded from the frozen_bar's pooled-window
+#   calculation because they bring an atypical influx that biases the 99th percentile —
+#   e.g. brand_1.lv/sb's 2025-05 major ice hockey event drew a large low-value/one-off
+#   betting influx that pulled the bar down. Any rolling window touching a listed month
+#   is dropped entirely from the pool, not just that one month's contribution. A
+#   reporting month equal to one of these gets event_flag=true in the module's output,
+#   so a regular-tier swing that month reads as an event effect, not a trend.
+
+defaults:
+  monthly_rate_fraction: 0.3333333333333333  # 1/3 — module parameter default, override per call
+
+brand_products:
+  brand_1.lv:
+    digital_casino: {frozen_bar: 81724.65, inv_hhi_2025: 4075.84, skip: false, event_months: []}
+    live_casino:    {frozen_bar: 43304.52, inv_hhi_2025: 446.89,  skip: false, event_months: []}
+    sb:             {frozen_bar: 32784.35, inv_hhi_2025: 126.26,  skip: false, event_months: ['2025-05', '2026-02', '2026-05']}
+  brand_1.ee:
+    digital_casino: {frozen_bar: 85494.30, inv_hhi_2025: 895.43, skip: false, event_months: []}
+    live_casino:    {frozen_bar: 41703.13, inv_hhi_2025: 49.15,  skip: false, event_months: []}
+    sb:             {frozen_bar: 29691.66, inv_hhi_2025: 44.30,  skip: false, event_months: []}
+  brand_1.lt:
+    digital_casino: {frozen_bar: 92961.75, inv_hhi_2025: 623.00, skip: false, event_months: []}
+    live_casino:    {frozen_bar: 89760.23, inv_hhi_2025: 36.35,  skip: false, event_months: []}
+    sb:             {frozen_bar: 44778.65, inv_hhi_2025: 146.56, skip: false, event_months: []}
+  brand_1.com:
+    digital_casino: {frozen_bar: null, inv_hhi_2025: 18.95, skip: true, event_months: []}
+    live_casino:    {frozen_bar: null, inv_hhi_2025: 4.76,  skip: true, event_months: []}
+    sb:             {frozen_bar: null, inv_hhi_2025: 5.52,  skip: true, event_months: []}
+  brand_3.lv:
+    digital_casino: {frozen_bar: 67236.67, inv_hhi_2025: 2280.30, skip: false, event_months: []}
+    live_casino:    {frozen_bar: 19792.91, inv_hhi_2025: 107.52,  skip: false, event_months: []}
+    sb:             {frozen_bar: 21028.11, inv_hhi_2025: 104.49,  skip: false, event_months: ['2025-05', '2026-02', '2026-05']}
+  brand_2.lv:
+    digital_casino: {frozen_bar: 55014.23, inv_hhi_2025: 2388.52, skip: false, event_months: []}
+    live_casino:    {frozen_bar: null, inv_hhi_2025: 13.64, skip: true, event_months: []}
+    sb:             {frozen_bar: null, inv_hhi_2025: null, skip: true, event_months: ['2026-02', '2026-05']}
+  brand_4.ee:
+    digital_casino: {frozen_bar: 79969.13, inv_hhi_2025: 588.63, skip: false, event_months: []}
+    live_casino:    {frozen_bar: null, inv_hhi_2025: 3.98, skip: true, event_months: []}
+  brand_5.lt:
+    digital_casino: {frozen_bar: 55580.85, inv_hhi_2025: 153.91, skip: false, event_months: []}
+    live_casino:    {frozen_bar: null, inv_hhi_2025: 1.56, skip: true, event_months: []}
+  brand_6_estonia:
+    digital_casino: {frozen_bar: 162763.98, inv_hhi_2025: 381.29, skip: false, event_months: []}
+    live_casino:    {frozen_bar: null, inv_hhi_2025: 6.64, skip: true, event_months: []}
+    sb:             {frozen_bar: 43638.33, inv_hhi_2025: 34.74, skip: false, event_months: []}
+  brand_6_finland:
+    digital_casino: {frozen_bar: 230847.21, inv_hhi_2025: 2114.31, skip: false, event_months: []}
+    live_casino:    {frozen_bar: 193629.27, inv_hhi_2025: 119.07,  skip: false, event_months: []}
+    sb:             {frozen_bar: 44805.87,  inv_hhi_2025: 183.52,  skip: false, event_months: []}
+  brand_6se_sweden:
+    digital_casino: {frozen_bar: 27473.39, inv_hhi_2025: 2171.77, skip: false, event_months: []}
+    live_casino:    {frozen_bar: 42126.16, inv_hhi_2025: 136.70,  skip: false, event_months: []}
+    sb:             {frozen_bar: 11615.13, inv_hhi_2025: 91.38,   skip: false, event_months: []}
+  brand_7_estonia:
+    digital_casino: {frozen_bar: 110953.63, inv_hhi_2025: 212.12, skip: false, event_months: []}
+    live_casino:    {frozen_bar: null, inv_hhi_2025: 8.00, skip: true, event_months: []}
+  brand_7_finland:
+    digital_casino: {frozen_bar: 201497.10, inv_hhi_2025: 582.77, skip: false, event_months: []}
+    live_casino:    {frozen_bar: 177335.81, inv_hhi_2025: 33.05,  skip: false, event_months: []}

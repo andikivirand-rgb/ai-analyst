@@ -1,0 +1,112 @@
+# Frozen baseline parameters for src/processing/hv_two_track_segmentation.py.
+# Computed once (2026-08-25) and NOT recalculated at runtime - the module only
+# ever reads these values. To refresh, re-run the frozen-bar/1-HHI computation
+# against a new baseline year and replace this file by hand.
+#
+# This is a SEPARATE model from config/hv_segmentation.yaml (the existing
+# single-track, per-brand-product turnover model, which stays in place
+# unchanged). This one has two tracks per brand, never summed - the units
+# aren't comparable:
+#   casino: theo GGR (digital_casino + live_casino combined). theo GGR is
+#     comparable across those two products (it's a margin-adjusted value),
+#     so summing them is valid.
+#   sb: turnover, NOT real GGR. At player level, sportsbook GGR is dominated
+#     by luck - a big staker on a good run would drop out of the tier
+#     despite being a genuinely valuable player, so turnover is the stable
+#     value metric here.
+#
+# frozen_bar: 99th percentile of pooled per-player trailing-3-month value
+#   (theo GGR for casino, turnover for sb), across all rolling 3-month
+#   windows fully inside the baseline_year below. null if skip=true.
+# inv_hhi: 1/HHI on full-baseline-year per-player value, audit-only - this is
+#   what skip is derived from (along with "not offered" cases), not something
+#   the module recomputes.
+# baseline_year: 2024 for everyone except brand_6se_sweden (see its exceptions
+#   below). NOTE: theo margins themselves (data/raw/theo_margin_table.csv,
+#   built by src/processing/theo_margin_table.py) are estimated from 2024-01
+#   to 2026-07, which OVERLAPS this baseline window and the later reporting
+#   window - see correction_log.md entry 2026-08-25 for the resulting slight
+#   bias toward zero in margin variance, to be fixed at next recalibration by
+#   ending the margin estimation window before the reporting period.
+# Casino frozen_bar/inv_hhi below were recomputed 2026-08-25 after
+# theo_margin_table.py started flooring every game/brand-product margin at
+# 2% (MARGIN_FLOOR) - no casino game has a genuine long-run margin at or
+# below zero; a raw aggregate margin that low is short-run estimation-window
+# variance, not the game's true edge. ~22% of rows in the margin table were
+# floored. This raised theo GGR broadly, so frozen_bar/inv_hhi shifted up a
+# few percent from the pre-floor values.
+# skip: true if inv_hhi < 30, OR the brand doesn't offer that track at all
+#   (see skip_reason) - hv_two_track_segmentation.py refuses to run a report
+#   for a skipped brand-track.
+# event_months: same semantics as config/hv_segmentation.yaml - calendar
+#   months excluded from the frozen_bar's pooled-window calculation (none of
+#   these fall inside the 2024 baseline year, so they don't affect frozen_bar
+#   here, but are carried forward from the existing sb config so reporting
+#   months matching them still get event_flag=true).
+
+defaults:
+  monthly_rate_fraction: 0.5
+
+brands:
+  brand_1.lv:
+    casino: {baseline_year: 2024, frozen_bar: 3868.69,  inv_hhi: 2891.41, skip: false, event_months: []}
+    sb:     {baseline_year: 2024, frozen_bar: 27088.74, inv_hhi: 194.06,  skip: false, event_months: ['2025-05', '2026-02', '2026-05']}
+  brand_1.ee:
+    casino: {baseline_year: 2024, frozen_bar: 5119.72,  inv_hhi: 741.33, skip: false, event_months: []}
+    sb:     {baseline_year: 2024, frozen_bar: 29565.86, inv_hhi: 63.47,  skip: false, event_months: []}
+  brand_1.lt:
+    casino: {baseline_year: 2024, frozen_bar: 3931.14,  inv_hhi: 289.32, skip: false, event_months: []}
+    sb:     {baseline_year: 2024, frozen_bar: 37655.63, inv_hhi: 108.24, skip: false, event_months: []}
+  brand_3.lv:
+    casino: {baseline_year: 2024, frozen_bar: 3155.26,  inv_hhi: 1988.55, skip: false, event_months: []}
+    sb:     {baseline_year: 2024, frozen_bar: 28330.38, inv_hhi: 113.54,  skip: false, event_months: ['2025-05', '2026-02', '2026-05']}
+  brand_2.lv:
+    casino: {baseline_year: 2024, frozen_bar: 2794.04, inv_hhi: 2205.12, skip: false, event_months: []}
+    sb:     {baseline_year: 2024, frozen_bar: null, inv_hhi: null, skip: true, event_months: ['2026-02', '2026-05'],
+             skip_reason: "2024 sportsbook turnover for brand_2.lv is negligible (frozen_bar computed as 0.00, 1/HHI undefined) - too thin to segment."}
+  brand_4.ee:
+    casino: {baseline_year: 2024, frozen_bar: 3670.68, inv_hhi: 475.54, skip: false, event_months: []}
+    sb:     {skip: true, skip_reason: "sportsbook not offered on this brand."}
+  brand_5.lt:
+    casino: {baseline_year: 2024, frozen_bar: 2718.41, inv_hhi: 49.20, skip: false, event_months: []}
+    sb:     {skip: true, skip_reason: "sportsbook not offered on this brand."}
+  brand_6_estonia:
+    casino: {baseline_year: 2024, frozen_bar: 4612.70,  inv_hhi: 529.49, skip: false, event_months: []}
+    sb:     {baseline_year: 2024, frozen_bar: 41656.61, inv_hhi: 40.89,  skip: false, event_months: []}
+  brand_6_finland:
+    casino: {baseline_year: 2024, frozen_bar: 6477.91,  inv_hhi: 1850.55, skip: false, event_months: []}
+    sb:     {baseline_year: 2024, frozen_bar: 40897.00, inv_hhi: 100.24,  skip: false, event_months: []}
+  brand_7_estonia:
+    casino: {baseline_year: 2024, frozen_bar: 2395.74, inv_hhi: 165.40, skip: false, event_months: []}
+    sb:     {skip: true, skip_reason: "sportsbook not offered on this brand."}
+  brand_7_finland:
+    casino: {baseline_year: 2024, frozen_bar: 4904.18, inv_hhi: 637.84, skip: false, event_months: []}
+    sb:     {skip: true, skip_reason: "sportsbook not offered on this brand."}
+  brand_6se_sweden:
+    casino:
+      baseline_year: 2025
+      frozen_bar: 14623.30
+      inv_hhi: 2199.13
+      skip: false
+      event_months: []
+      value_metric: turnover
+      value_metric_reason: >
+        No player-level theo GGR available for brand_6se_sweden - it was excluded
+        from the theo margin table and the player x game pull (standing
+        decision: not an analysis priority right now). Casino track uses
+        turnover (digital_casino + live_casino combined) instead of theo GGR.
+      baseline_year_reason: >
+        2024 is unsuitable as a baseline for this brand: its casino product
+        only started May 2024, so calendar-2024 is a partial year. Full
+        calendar-2025 data is available and used instead.
+    sb:
+      baseline_year: 2025
+      frozen_bar: 11615.13
+      inv_hhi: 91.38
+      skip: false
+      event_months: []
+      baseline_year_reason: >
+        Sportsbook is entirely absent for brand_6se_sweden in calendar 2024 (it
+        launched around September 2025), so 2024 cannot be used as a
+        baseline. 2025 is used instead, even though it only has ~4 months of
+        data (Sep-Dec) - still enough to compute a frozen_bar and 1/HHI.

@@ -1,0 +1,15 @@
+# Real business data and credentials -- never commit these.
+config/.env
+data/
+outputs/
+memory/
+DO_NOT_USE/
+layout.json
+
+# Local machine / session artifacts
+venv/
+__pycache__/
+*.pyc
+.claude/settings.local.json
+.tmp.drivedownload/
+.tmp.driveupload/
