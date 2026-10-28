@@ -5,6 +5,11 @@ from datetime import datetime
 import warnings
 from dotenv import load_dotenv
 
+# Windows consoles default to cp1252, which can't encode the emoji in status
+# prints below - force utf-8 so a cosmetic print never crashes a successful run.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 # Suppress pandas SQL warnings for clean terminal output
 warnings.filterwarnings('ignore', category=UserWarning)
 
@@ -168,7 +173,7 @@ ch_client.close()
 print(" -> Enforcing strict single-source domain mapping...")
 
 # STRICT MAPPING: Define exactly which domains are allowed from which database
-vendor_a_domains = [
+Vendor_A_domains = [
     'Brand_6_Estonia', 'Brand_7_Estonia', 
     'Brand_6_Finland', 'Brand_7_Finland', 
     'Brand_6se_Sweden'
@@ -181,7 +186,7 @@ brand_1_domains = [
 ]
 
 # RUTHLESS FILTERING: Drop any overlaps instantly
-df_atomic = df_atomic[df_atomic['domain'].isin(vendor_a_domains)]
+df_atomic = df_atomic[df_atomic['domain'].isin(Vendor_A_domains)]
 df_pg = df_pg[df_pg['domain'].isin(brand_1_domains)]
 df_ch = df_ch[df_ch['domain'].isin(brand_1_domains)]
 

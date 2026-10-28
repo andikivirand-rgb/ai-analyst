@@ -6,6 +6,11 @@ from datetime import datetime
 import warnings
 from dotenv import load_dotenv
 
+# Windows consoles default to cp1252, which can't encode the emoji in status
+# prints below - force utf-8 so a cosmetic print never crashes a successful run.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 warnings.filterwarnings('ignore', category=UserWarning)
 
 # ==========================================
@@ -36,7 +41,7 @@ print(f"Pulling monthly player-level financial data from {start_date} to {end_da
 # 2. SQL QUERIES
 # ==========================================
 
-# --- SNOWFLAKE (Vendor A Brands) ---
+# --- SNOWFLAKE (Vendor_A Brands) ---
 query_sf = f"""
 SELECT
     CAST(DATE_TRUNC('month', R.CALENDARDATE) AS DATE) AS month_date,
@@ -65,7 +70,13 @@ JOIN (
     ON R.PLAYERID = CP.PLAYERID AND R.WHITELABELNAME = CP.WHITELABELNAME
 WHERE R.CALENDARDATE >= '{start_date}'
   AND R.CALENDARDATE < '{end_date}'
-  AND (R.BETEUR > 0 OR (R.PARENTGAMECATEGORY = 'Poker' AND R.GGREUR <> 0))
+  -- See the same fix in monthly_player_segmentation_pull.py for the full rationale: a row can carry
+  -- a real GGR impact (most commonly a Sportbook bet settling on a later date than it was placed,
+  -- also seen on Casino jackpot/chargeback corrections) with zero BETEUR and zero bonus cost -- the
+  -- old filter (BETEUR>0, with a Poker-only carve-out) silently dropped these, overstating GGR. This
+  -- script never even had the bonus-cost carve-out the other script got in 2026-09 -- add both fixes
+  -- here too, generalized to every category (not just Poker).
+  AND (R.BETEUR > 0 OR R.BONUSCOSTEUR <> 0 OR R.GGREUR <> 0)
 GROUP BY 1, 2, 3, 4
 """
 
@@ -226,7 +237,7 @@ SELECT month_date, domain, external_id, product, turnover, ggr, bonus_cost, ngr 
 # 3. EXECUTION & CONCATENATION
 # ==========================================
 def main():
-    print(" -> Querying Snowflake (Vendor A Brands)...")
+    print(" -> Querying Snowflake (Vendor_A Brands)...")
     sf_conn = get_snowflake_conn()
     df_sf = pd.read_sql(query_sf, sf_conn)
     df_sf.columns = df_sf.columns.str.lower()

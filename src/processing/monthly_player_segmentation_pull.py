@@ -6,6 +6,11 @@ from datetime import datetime
 import warnings
 from dotenv import load_dotenv
 
+# Windows consoles default to cp1252, which can't encode the emoji in status
+# prints below - force utf-8 so a cosmetic print never crashes a successful run.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 warnings.filterwarnings('ignore', category=UserWarning)
 
 # ==========================================
@@ -36,7 +41,7 @@ print(f"Pulling monthly player-level financial data from {start_date}...")
 # 2. SQL QUERIES
 # ==========================================
 
-# --- SNOWFLAKE (Vendor A Brands) ---
+# --- SNOWFLAKE (Vendor_A Brands) ---
 query_sf = f"""
 SELECT
     CAST(DATE_TRUNC('month', R.CALENDARDATE) AS DATE) AS month_date,
@@ -64,7 +69,17 @@ JOIN (
 ) AS CP 
     ON R.PLAYERID = CP.PLAYERID AND R.WHITELABELNAME = CP.WHITELABELNAME
 WHERE R.CALENDARDATE >= '{start_date}'
-  AND (R.BETEUR > 0 OR (R.PARENTGAMECATEGORY = 'Poker' AND R.GGREUR <> 0))
+  -- A row can carry a real GGR impact with zero BETEUR and zero bonus cost -- most commonly a
+  -- Sportbook bet that settles (as a win, refund, or void) on a LATER CALENDARDATE than the one
+  -- it was placed on, landing as its own zero-bet correction row; also seen on Casino (jackpot/
+  -- chargeback corrections). The old filter (BETEUR>0 OR bonus<>0, with a Poker-only carve-out for
+  -- GGR<>0) silently dropped every one of these rows, overstating GGR -- confirmed live 2026-10-06:
+  -- recovered rows are ~€2.65M of GGR (nearly all negative/corrections) since 2025-01 across
+  -- Casino+SportBetting+LiveCasino, all Vendor_A brands. Generalizing the Poker carve-out to every
+  -- category (GGR<>0, not bet/category-gated) is what actually fixes it, and correctly captures a
+  -- settlement row no matter how many months after the original bet it lands on, since each
+  -- settlement is its own dated row -- there is no time-window logic needed.
+  AND (R.BETEUR > 0 OR R.BONUSCOSTEUR <> 0 OR R.GGREUR <> 0)
 GROUP BY 1, 2, 3, 4
 """
 
@@ -224,7 +239,7 @@ SELECT month_date, domain, external_id, product, turnover, ggr, bonus_cost, ngr 
 # 3. EXECUTION
 # ==========================================
 def main():
-    print(" -> Querying Snowflake (Vendor A Brands)...")
+    print(" -> Querying Snowflake (Vendor_A Brands)...")
     sf_conn = get_snowflake_conn()
     df_sf = pd.read_sql(query_sf, sf_conn)
     df_sf.columns = df_sf.columns.str.lower()

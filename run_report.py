@@ -1,6 +1,12 @@
 import subprocess
 import sys
 
+# Windows consoles default to cp1252, which can't encode the emoji used in
+# status prints below (and in the submodules run via subprocess) - force utf-8
+# so a cosmetic print never crashes an otherwise-successful run.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 def run_script(module_name):
     print(f"\n{'='*50}")
     print(f"🚀 Running module: {module_name}")

@@ -1,0 +1,19 @@
+# Inferred from import statements (no lockfile). Python 3.13.
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+xgboost
+scipy
+joblib
+openpyxl
+XlsxWriter
+snowflake-connector-python
+psycopg2-binary
+clickhouse-connect
+python-dotenv
+PyYAML
+markdown
+python-pptx
+sqlglot

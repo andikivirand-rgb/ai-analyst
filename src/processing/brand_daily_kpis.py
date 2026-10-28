@@ -28,7 +28,13 @@ warnings.filterwarnings('ignore')
 # 1. DATE CALCULATIONS (Current YTD vs YoY)
 # ==========================================
 today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-end_date_current = today - timedelta(days=today.weekday())
+# Optional one-off override (e.g. to force a full calendar month's data past the
+# normal weekly cutoff below) - exclusive upper bound, so '2026-10-01' pulls through Sep 30.
+_report_end_override = os.environ.get('REPORT_END_DATE')
+if _report_end_override:
+    end_date_current = datetime.strptime(_report_end_override, '%Y-%m-%d')
+else:
+    end_date_current = today - timedelta(days=today.weekday())
 start_date_current = end_date_current.replace(month=1, day=1)
 
 start_date_yoy = start_date_current - timedelta(days=364)
@@ -109,19 +115,19 @@ WITH combined_data AS (
 
     SELECT "Date"::date AS date, 
            CASE CONCAT("Country", "Brand")
-               WHEN 'LatviaBrand1' THEN 'brand_1.lv'
-               WHEN 'LatviaBrand2' THEN 'brand_2.lv'
-               WHEN 'LatviaBrand3' THEN 'brand_3.lv'
-               WHEN 'EstoniaBrand1' THEN 'brand_1.ee'
-               WHEN 'EstoniaBrand4' THEN 'brand_4.ee'
-               WHEN 'EstoniaBrand6' THEN 'Brand_6_Estonia'
-               WHEN 'EstoniaBrand7' THEN 'Brand_7_Estonia'
-               WHEN 'LithuaniaBrand1' THEN 'brand_1.lt'
-               WHEN 'LithuaniaBrand5' THEN 'brand_5.lt'
-               WHEN 'FinlandBrand1' THEN 'brand_1.com'
-               WHEN 'FinlandBrand6' THEN 'Brand_6_Finland'        
-               WHEN 'FinlandBrand7' THEN 'Brand_7_Finland'
-               WHEN 'SwedenBrand6se' THEN 'Brand_6se_Sweden'
+               WHEN 'LatviaBrand_1' THEN 'brand_1.lv'
+               WHEN 'LatviaBrand_2' THEN 'brand_2.lv'
+               WHEN 'LatviaBrand_3' THEN 'brand_3.lv'
+               WHEN 'EstoniaBrand_1' THEN 'brand_1.ee'
+               WHEN 'EstoniaBrand_4' THEN 'brand_4.ee'
+               WHEN 'EstoniaBrand_6' THEN 'Brand_6_Estonia'
+               WHEN 'EstoniaBrand_7' THEN 'Brand_7_Estonia'
+               WHEN 'LithuaniaBrand_1' THEN 'brand_1.lt'
+               WHEN 'LithuaniaBrand_5' THEN 'brand_5.lt'
+               WHEN 'FinlandBrand_1' THEN 'brand_1.com'
+               WHEN 'FinlandBrand_6' THEN 'Brand_6_Finland'        
+               WHEN 'FinlandBrand_7' THEN 'Brand_7_Finland'
+               WHEN 'SwedenBrand_6se' THEN 'Brand_6se_Sweden'
                ELSE 'no_domain'                                      
            END AS domain, 
            CASE 
@@ -173,32 +179,10 @@ final_report = pd.merge(df_current, df_yoy, on=['date', 'domain', 'product'], ho
 final_report = final_report.fillna(0)
 final_report = final_report.sort_values(by=['domain', 'product', 'date'])
 
-# ATPU/ARPU are domain/day-level metrics: 'actives' only lives on the
-# product='N/A' rows (from pbi_daily_kpis_report_actives), while turnover/ngr
-# live on the real product rows. Aggregate to (date, domain) before dividing,
-# then broadcast the result back onto every product row for that domain/day.
-domain_day = final_report.groupby(['date', 'domain']).agg(
-    total_turnover=('turnover', 'sum'),
-    total_ngr=('ngr', 'sum'),
-    total_turnover_yoy=('turnover_yoy', 'sum'),
-    total_ngr_yoy=('ngr_yoy', 'sum'),
-    total_actives=('actives', 'sum'),
-    total_actives_yoy=('actives_yoy', 'sum'),
-).reset_index()
-
-domain_day['atpu'] = np.where(domain_day['total_actives'] > 0, domain_day['total_turnover'] / domain_day['total_actives'], 0)
-domain_day['arpu'] = np.where(domain_day['total_actives'] > 0, domain_day['total_ngr'] / domain_day['total_actives'], 0)
-domain_day['atpu_yoy'] = np.where(domain_day['total_actives_yoy'] > 0, domain_day['total_turnover_yoy'] / domain_day['total_actives_yoy'], 0)
-domain_day['arpu_yoy'] = np.where(domain_day['total_actives_yoy'] > 0, domain_day['total_ngr_yoy'] / domain_day['total_actives_yoy'], 0)
-
-final_report = final_report.merge(
-    domain_day[['date', 'domain', 'atpu', 'arpu', 'atpu_yoy', 'arpu_yoy']],
-    on=['date', 'domain'], how='left'
-)
-
 # ==========================================
-# 4b. MERGE IN PER-PRODUCT + TRUE-OVERALL ACTIVES
+# 4a. MERGE IN PER-PRODUCT + TRUE-OVERALL ACTIVES, AND FIX VENDOR_A ACTIVES
 # (from brand_daily_actives_pull.py — run that script first to populate this file)
+# Done BEFORE the ATPU/ARPU calc below so those ratios use corrected actives.
 # ==========================================
 actives_file = os.path.join(data_dir, 'brand_daily_actives_comparison.csv')
 new_actives_cols = ['actives_by_product', 'actives_by_product_yoy', 'actives_true_overall', 'actives_true_overall_yoy']
@@ -218,7 +202,7 @@ if os.path.exists(actives_file):
 
     # True overall actives: deduped across products for that domain/day —
     # NOT a sum of actives_by_product. Broadcast onto every product row for
-    # that domain/day, same pattern as atpu/arpu above.
+    # that domain/day, same pattern as atpu/arpu below.
     df_actives_brand = df_actives[df_actives['product'] == 'Brand_Total'].rename(
         columns={'actives': 'actives_true_overall', 'actives_yoy': 'actives_true_overall_yoy'}
     )
@@ -228,10 +212,44 @@ if os.path.exists(actives_file):
     )
 
     final_report[new_actives_cols] = final_report[new_actives_cols].fillna(0)
+
+    # pbi_daily_kpis_report_actives (the source of 'actives' from section 2 above)
+    # undercounts actives by roughly half for the Vendor_A-platform domains, and the
+    # undercount ratio isn't stable year over year, which flips the YoY sign for
+    # some of them. actives_true_overall (Snowflake-sourced, via
+    # brand_daily_actives_pull.py) is confirmed correct for these domains, so use
+    # it as 'actives' for them instead - before ATPU/ARPU are derived from it.
+    Vendor_A_domains_fix = ['Brand_6_Estonia', 'Brand_6_Finland', 'Brand_7_Estonia', 'Brand_7_Finland', 'Brand_6se_Sweden']
+    Vendor_A_mask = (final_report['domain'].isin(Vendor_A_domains_fix)) & (final_report['product'] == 'N/A') & (final_report['actives_true_overall'] > 0)
+    final_report.loc[Vendor_A_mask, 'actives'] = final_report.loc[Vendor_A_mask, 'actives_true_overall']
+    final_report.loc[Vendor_A_mask, 'actives_yoy'] = final_report.loc[Vendor_A_mask, 'actives_true_overall_yoy']
 else:
     print(f"WARNING: {actives_file} not found - run brand_daily_actives_pull.py first to populate actives-by-product columns.")
     for col in new_actives_cols:
         final_report[col] = 0
+
+# ATPU/ARPU are domain/day-level metrics: 'actives' only lives on the
+# product='N/A' rows, while turnover/ngr live on the real product rows.
+# Aggregate to (date, domain) before dividing, then broadcast the result
+# back onto every product row for that domain/day.
+domain_day = final_report.groupby(['date', 'domain']).agg(
+    total_turnover=('turnover', 'sum'),
+    total_ngr=('ngr', 'sum'),
+    total_turnover_yoy=('turnover_yoy', 'sum'),
+    total_ngr_yoy=('ngr_yoy', 'sum'),
+    total_actives=('actives', 'sum'),
+    total_actives_yoy=('actives_yoy', 'sum'),
+).reset_index()
+
+domain_day['atpu'] = np.where(domain_day['total_actives'] > 0, domain_day['total_turnover'] / domain_day['total_actives'], 0)
+domain_day['arpu'] = np.where(domain_day['total_actives'] > 0, domain_day['total_ngr'] / domain_day['total_actives'], 0)
+domain_day['atpu_yoy'] = np.where(domain_day['total_actives_yoy'] > 0, domain_day['total_turnover_yoy'] / domain_day['total_actives_yoy'], 0)
+domain_day['arpu_yoy'] = np.where(domain_day['total_actives_yoy'] > 0, domain_day['total_ngr_yoy'] / domain_day['total_actives_yoy'], 0)
+
+final_report = final_report.merge(
+    domain_day[['date', 'domain', 'atpu', 'arpu', 'atpu_yoy', 'arpu_yoy']],
+    on=['date', 'domain'], how='left'
+)
 
 print("Processing complete! Here is a preview of your YTD brand daily report:")
 print(final_report[['date', 'domain', 'product', 'ngr', 'actives', 'actives_yoy']].head())

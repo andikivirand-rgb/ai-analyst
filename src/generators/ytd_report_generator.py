@@ -1,8 +1,14 @@
 import os
+import sys
 import pandas as pd
 import numpy as np
 from datetime import datetime
 import warnings
+
+# Windows consoles default to cp1252, which can't encode the emoji in status
+# prints below - force utf-8 so a cosmetic print never crashes a successful run.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 warnings.filterwarnings('ignore')
 
@@ -37,12 +43,12 @@ def get_brand_color(domain):
     if 'brand_1.ee' in d or ('brand_1' in d and 'estonia' in d): return '#2C3E3E'
     if 'brand_4' in d: return '#FF5087'
     if 'brand_6' in d and ('estonia' in d or 'ee' in d): return '#1A7560'
-    if 'brand_7' in d and ('estonia' in d or 'ee' in d): return '#FDC03D'
+    if 'boost' in d and ('estonia' in d or 'ee' in d): return '#FDC03D'
     if 'brand_1.lt' in d: return '#FFF61A'
     if 'brand_5' in d: return '#E88181'
     if 'brand_1.com' in d: return '#00b894'
     if 'brand_6' in d and ('finland' in d or 'fi' in d): return '#545F6C'
-    if 'brand_7' in d and ('finland' in d or 'fi' in d): return '#4F1ABE'
+    if 'boost' in d and ('finland' in d or 'fi' in d): return '#4F1ABE'
     if 'brand_6' in d and ('sweden' in d or 'se' in d): return '#FC5822'
     return '#0984e3'
 

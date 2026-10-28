@@ -34,7 +34,15 @@ COMPARISON_FILE = os.path.join(data_dir, 'brand_daily_actives_comparison.csv')
 # 2. DATE CALCULATIONS (same YTD + YoY window as brand_daily_kpis.py)
 # ==========================================
 today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-end_date_current = today - timedelta(days=today.weekday())
+# Optional one-off override (e.g. to force a full calendar month's data past the
+# normal weekly cutoff below) - exclusive upper bound, so '2026-10-01' pulls through Sep 30.
+# Must stay Monday-aligned with existing cached chunks, or get_missing_chunks() can
+# re-pull an overlapping partial week and double-count it (no dedupe on concat).
+_report_end_override = os.environ.get('REPORT_END_DATE')
+if _report_end_override:
+    end_date_current = datetime.strptime(_report_end_override, '%Y-%m-%d')
+else:
+    end_date_current = today - timedelta(days=today.weekday())
 start_date_current = end_date_current.replace(month=1, day=1)
 
 start_date_yoy = start_date_current - timedelta(days=364)
@@ -50,7 +58,7 @@ print(f"YoY YTD Period:     {yoy_start_str} to {yoy_end_str}\n")
 
 # STRICT MAPPING: which domains are allowed from which database (avoids double-counting
 # brands present in more than one backend) — same lists as monthly_actives_pull.py.
-vendor_a_domains = [
+Vendor_A_domains = [
     'Brand_6_Estonia', 'Brand_7_Estonia',
     'Brand_6_Finland', 'Brand_7_Finland',
     'Brand_6se_Sweden'
@@ -227,7 +235,7 @@ else:
         df_ch.columns = df_ch.columns.str.lower()
 
         # Enforce strict single-source domain mapping (no cross-DB double-counting)
-        df_atomic = df_atomic[df_atomic['domain'].isin(vendor_a_domains)]
+        df_atomic = df_atomic[df_atomic['domain'].isin(Vendor_A_domains)]
         df_pg = df_pg[df_pg['domain'].isin(brand_1_domains)]
         df_ch = df_ch[df_ch['domain'].isin(brand_1_domains)]
 

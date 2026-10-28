@@ -5,6 +5,11 @@ from datetime import datetime
 import warnings
 from dotenv import load_dotenv
 
+# Windows consoles default to cp1252, which can't encode the emoji in status
+# prints below - force utf-8 so a cosmetic print never crashes a successful run.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 warnings.filterwarnings('ignore', category=UserWarning)
 
 # ==========================================

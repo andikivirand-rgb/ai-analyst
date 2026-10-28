@@ -30,7 +30,13 @@ MASTER_CSV_FILE = os.path.join(data_dir, 'player_activity_master.csv')
 # ==========================================
 # Anchor end date to the most recent Monday (data covers strictly through Sunday)
 today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-end_date_main = today - timedelta(days=today.weekday())
+# Optional one-off override (e.g. to force a full calendar month's data past the
+# normal weekly cutoff above) - exclusive upper bound, so '2026-10-01' pulls through Sep 30.
+_report_end_override = os.environ.get('REPORT_END_DATE')
+if _report_end_override:
+    end_date_main = datetime.strptime(_report_end_override, '%Y-%m-%d')
+else:
+    end_date_main = today - timedelta(days=today.weekday())
 
 # Rolling 12 weeks cutoff (84 days)
 rolling_12_weeks_ago = end_date_main - timedelta(days=84)
@@ -362,7 +368,13 @@ print("\nProcessing and saving master file...")
 if new_dfs:
     df_fetched = pd.concat(new_dfs, ignore_index=True)
     df_fetched['date'] = pd.to_datetime(df_fetched['date'])
-    master_df = pd.concat([df_existing, df_fetched], ignore_index=True)
+    # A re-pulled chunk replaces any cached rows it overlaps (a chunk is re-pulled whole
+    # if any one day is missing) -- otherwise the overlapping days are double-counted.
+    df_existing['date'] = pd.to_datetime(df_existing['date'])
+    overlap = pd.Series(False, index=df_existing.index)
+    for start_dt, end_dt in chunks_to_pull:
+        overlap |= (df_existing['date'] >= pd.Timestamp(start_dt)) & (df_existing['date'] < pd.Timestamp(end_dt))
+    master_df = pd.concat([df_existing[~overlap], df_fetched], ignore_index=True)
 else:
     master_df = df_existing
 

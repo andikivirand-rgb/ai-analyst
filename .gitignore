@@ -13,3 +13,13 @@ __pycache__/
 .claude/settings.local.json
 .tmp.drivedownload/
 .tmp.driveupload/
+
+# Business workbooks, one-off scratch scripts and stray extracts (added 2026-10-28)
+config/*.xlsx
+*.xlsx
+*.csv
+*.pptx
+scratchpad_*.py
+src/processing/scratchpad_*.py
+powerbi/
+.claude/scheduled_tasks.lock

@@ -1,8 +1,14 @@
 import os
+import sys
 import pandas as pd
 import numpy as np
 from datetime import datetime
 import warnings
+
+# Windows consoles default to cp1252, which can't encode the emoji in status
+# prints below - force utf-8 so a cosmetic print never crashes a successful run.
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 warnings.filterwarnings('ignore')
 
@@ -37,11 +43,11 @@ def get_brand_color(domain):
     if 'brand_1.ee' in d or ('brand_1' in d and 'estonia' in d): return '#2C3E3E'
     if 'brand_4' in d: return '#FF5087'
     if 'brand_6' in d and ('estonia' in d or 'ee' in d): return '#1A7560'
-    if 'brand_7' in d and ('estonia' in d or 'ee' in d): return '#FDC03D'
+    if 'boost' in d and ('estonia' in d or 'ee' in d): return '#FDC03D'
     if 'brand_1.lt' in d: return '#FFF61A'
     if 'brand_5' in d: return '#E88181'
     if 'brand_6' in d and ('finland' in d or 'fi' in d): return '#545F6C'
-    if 'brand_7' in d and ('finland' in d or 'fi' in d): return '#4F1ABE'
+    if 'boost' in d and ('finland' in d or 'fi' in d): return '#4F1ABE'
     if 'brand_6' in d and ('sweden' in d or 'se' in d): return '#FC5822'
     return '#0984e3'
 
@@ -152,9 +158,15 @@ df_players['Country'] = df_players['domain'].apply(get_country)
 # ---> MONTHLY DATE LOGIC <---
 max_data_date = df_brands['date'].max()
 
-# Find the LAST FULLY COMPLETED MONTH
-cm_end = max_data_date.replace(day=1) - pd.Timedelta(days=1)
-cm_start = cm_end.replace(day=1)
+# Find the LAST FULLY COMPLETED MONTH. If max_data_date already lands on the
+# real last day of its own month, that month itself is complete - don't step
+# back an extra month just because max_data_date isn't the 1st of the next one.
+if max_data_date == (max_data_date + pd.offsets.MonthEnd(0)):
+    cm_start = max_data_date.replace(day=1)
+    cm_end = max_data_date
+else:
+    cm_end = max_data_date.replace(day=1) - pd.Timedelta(days=1)
+    cm_start = cm_end.replace(day=1)
 title_date_str = cm_start.strftime('%B %Y')
 
 # Exact YoY Full Month Date Range
